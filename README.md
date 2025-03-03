@@ -49,5 +49,5 @@ The **Kitchen Service** is a microservice responsible for managing dishes in a r
 ### Steps
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone <https://github.com/wajidminhas/nawfal-kitchen.git>
    cd kitchen_service

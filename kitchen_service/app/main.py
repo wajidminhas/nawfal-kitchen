@@ -29,6 +29,7 @@ async def root():
 async def add_dish(dish: Dish, session: Session = Depends(get_session)):
     session.add(dish)
     session.commit()
+    session.refresh(dish)
     return {"message": "Dish added"}
 
 
@@ -37,6 +38,7 @@ async def add_dish(dish: Dish, session: Session = Depends(get_session)):
 async def add_dish_to_kitchen(dish: Dish, session: Session = Depends(get_session)):
     session.add(dish)
     session.commit()
+    session.refresh(dish)
     return {"message": "Dish added to kitchen"}
 
 # add a single dish to the kitchen
@@ -123,7 +125,7 @@ async def get_dishes_by_status_and_order_by_created_at(status: str, session: Ses
     dishes = session.exec(select(Dish).where(Dish.status == status).order_by(Dish.created_at)).all()
     return dishes
 
-# dish altered
+# dish altered and user want to another dish
 @app.put("/dishes/{dish_id}/altered")
 async def dish_altered(dish_id: int, session: Session = Depends(get_session)):
     dish = session.get(Dish, dish_id)
@@ -131,8 +133,7 @@ async def dish_altered(dish_id: int, session: Session = Depends(get_session)):
         dish.status = "altered"
         session.commit()
         return {"message": "Dish altered"}
-    else:
-        raise HTTPException(status_code=404, detail="Dish not found")
+    
 
 # dish is cancelled
 @app.put("/dishes/{dish_id}/cancelled")
@@ -141,6 +142,7 @@ async def dish_cancelled(dish_id: int, session: Session = Depends(get_session)):
     if dish:
         dish.status = "cancelled"
         session.commit()
+        session.refresh(dish)
         return {"message": "Dish cancelled"}
     else:
         raise HTTPException(status_code=404, detail="Dish not found")

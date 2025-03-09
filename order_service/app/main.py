@@ -1,21 +1,30 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from sqlmodel import Session
-from model import Order, OrderItem
-from database import engine, create_db_and_tables
+from app.model import Order, OrderItem
+from app.database import engine, get_session, create_db_table
+from contextlib import asynccontextmanager
+from typing import Annotated
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting up...")
+    create_db_table()
+    yield
+    print("Shutting down...")
 
-@app.on_event("startup")
-def on_startup():
-    create_db_and_tables()
+app = FastAPI(lifespan=lifespan,
+              title="order service",
+              description = "Order service for the Nawfal restaurant")
+
 
 @app.post("/orders/", response_model=Order)
-def create_order(order: Order):
-    with Session(engine) as session:
+def create_order(order: Order, session: Session = Depends(get_session)):
         session.add(order)
         session.commit()
         session.refresh(order)
         return order
+    
+# get order by
 
 @app.get("/orders/{order_id}", response_model=Order)
 def get_order(order_id: int):
@@ -26,8 +35,7 @@ def get_order(order_id: int):
         return order
 
 @app.put("/orders/{order_id}/status", response_model=Order)
-def update_order_status(order_id: int, status: str):
-    with Session(engine) as session:
+def update_order_status(order_id: int, status: str, session: Annotated[Session, Depends(get_session)]):
         order = session.get(Order, order_id)
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
